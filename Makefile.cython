@@ -1,0 +1,17 @@
+EXTENSION=cyradbin.so
+EXTOBJS=cyradbin.o dorebin.o
+PYXSRCS=cyradbin.pyx
+PYXPRODS=cyradbin.c
+CFLAGS+=-shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.5 -I/usr/lib/python2.5/site-packages/numpy/core/include/numpy
+
+all: $(EXTENSION)
+
+# ---- Link --------------------------- 
+$(EXTENSION): $(EXTOBJS) 
+	gcc $(CFLAGS) $^ -o $@
+
+$(PYXPRODS): $(PYXSRCS)
+	cython $< 
+
+clean:
+	-rm -f $(EXTENSION) $(EXTOBJS) $(PYXPRODS)
