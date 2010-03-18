@@ -14,4 +14,4 @@ $(PYXPRODS): $(PYXSRCS)
 	cython $< 
 
 clean:
-	-rm -f $(EXTENSION) $(EXTOBJS) $(PYXPRODS)
+	-rm -f $(EXTENSION) $(EXTOBJS) $(PYXPRODS) *.pyc
