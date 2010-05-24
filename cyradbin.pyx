@@ -14,9 +14,18 @@ def radbin(np.ndarray image, double c_x=np.nan, double c_y=np.nan, radrange=None
         radrange=None, phirange=None, int norm=1, mask=None)
 
     Radial rebinning of (SAS) data.
+    The coordinate system of the image is such that the upper left corner
+    of the image is at position [0.0, 0.0], i.e. the centers of the pixels
+    are at positions [n+0.5, m+0.5].
 
     :Parameters:
-     -
+     - image: A 2D array
+     - c_x: coordinate of the center in horizontal direction
+     - c_y: coordinate of the center in vertical direction
+     - radrange: array containing the edges of radial bins
+     - phirange: array containing the edges of angular bins
+     - norm: Do we normalize counts with number of pixels in the bin
+     - mask: mask file, same size as image, image values where mask != 1 are ignored
     """
     # Check Python args
     if image.ndim != 2:
