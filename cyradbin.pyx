@@ -23,9 +23,9 @@ def radbin(np.ndarray image, double c_x=np.nan, double c_y=np.nan, radrange=None
         raise ValueError
     cdef np.ndarray image_arr = image.astype('double')
     if np.isnan(c_x):
-        c_x = image_arr.shape[0] / 2.0
+        c_x = image_arr.shape[1] / 2.0
     if np.isnan(c_y):
-        c_y = image_arr.shape[1] / 2.0
+        c_y = image_arr.shape[0] / 2.0
 
     cdef np.ndarray radrange_arr
     if radrange == None:
@@ -48,17 +48,29 @@ def radbin(np.ndarray image, double c_x=np.nan, double c_y=np.nan, radrange=None
     if mask == None:
         mask_arr = np.ones_like(image).astype('uint8')
     else:
-        if(mask.shape[0] != image.shape[0]
+        if(mask.ndim != 2 or mask.shape[0] != image.shape[0]
             or mask.shape[1] != image.shape[1]):
             raise ValueError
         mask_arr = mask.astype('uint8')
 
     # Input args to C function call
     cdef double *img = <double *> image_arr.data
-    cdef int xdim = image_arr.shape[0]
-    cdef int ydim = image_arr.shape[1]
-    cdef double xo = c_x
-    cdef double yo = c_y
+    if image_arr.strides[0] > image_arr.strides[1]:
+        # First index jumps over columns / rows
+        center_x = c_x
+        center_y = c_y
+        xshape = image_arr.shape[1]
+        yshape = image_arr.shape[0]
+    else:
+        # Second index jumps over columns / rows
+        center_x = c_y
+        center_y = c_x
+        xshape = image_arr.shape[0]
+        yshape = image_arr.shape[1]
+    cdef int xdim = xshape
+    cdef int ydim = yshape
+    cdef double xo = center_x
+    cdef double yo = center_y
     cdef double *radrange_in = <double *> radrange_arr.data
     cdef int radlen = radrange_arr.shape[0]
     cdef double *phirange_in = <double *> phirange_arr.data
