@@ -4,28 +4,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-typedef unsigned char uchar;
-
-// binary search of index of val in monotonically increasing array table
-// returns the index of the table or
-// -1 if val < table[0]
-// -2 if val > table[len-1]
-int binsearch(double val, const double *table, int len)
-{
-    int left = 0;
-    int right = len;
-    int mid;
-    while((right - left) > 1) {
-	mid = (left + right) >> 1;
-	if(val >= table[mid]) {
-	    left = mid;
-	} else {
-	    right = mid;
-	}
-    }
-
-    return left;
-}
+extern int binsearch(double val, const double *table, int len);
 
 // FIXME: do checking for small bin areas so that only the necessary
 // rectangular portion of the matrix goes through the inner loop.
