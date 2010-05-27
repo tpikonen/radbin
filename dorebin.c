@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <math.h>
 
 extern int binsearch(double val, const double *table, int len);
@@ -13,10 +14,24 @@ extern int binsearch(double val, const double *table, int len);
 // 0 if success
 // 1 if malloc fails
 // 2 if total phirange is larger than 2*pi
+#ifdef MAKE_TABLE
+// Return two arrays of size (xdim, ydim) containing indices to radial
+// and phi bins. The pixels which are outside of bins or masked are given
+// index (0,0). For this reason, the radial indices are offset by one,
+// i.e. a pixel with distance < 0.5 from the center is mapped to radial
+// index 1.
+int make_radtable(int xdim, int ydim, double x, double y, \
+    const double *radrange_in, int radlen, \
+    const double *phirange_in, int philen, const uint8_t *mask,\
+    uint16_t *rad_out, uint16_t *phi_out)
+#else
+// Return img radially binned into array a_out of size (radlen, philen).
+// Also return the number of pixels in each output bin in n_out.
 int do_rebin(const double *img, int xdim, int ydim, double x, double y, \
     const double *radrange_in, int radlen, \
-    const double *phirange_in, int philen, int norm, const uchar *mask,\
+    const double *phirange_in, int philen, int norm, const uint8_t *mask,\
     double *a_out, int *n_out)
+#endif
 {
     int i, p, q;
     int rind, pind, o_ind, i_ind, rbins, phibins;
@@ -45,6 +60,15 @@ int do_rebin(const double *img, int xdim, int ydim, double x, double y, \
     rbins = radlen - 1;
     phibins = philen - 1;
 
+#ifdef MAKE_TABLE
+
+    // Initialize output tables to zero. Non-binned values go to bin
+    // (rad, phi) = (0,0)
+    for(i = 0; i < xdim*ydim; i++) {
+	rad_out[i] = 0;
+	phi_out[i] = 0;
+    }
+#else
     for(q = 0; q < phibins; q++) {
         o_ind = q*rbins;
 	for(p = 0; p < rbins; p++) {
@@ -53,6 +77,7 @@ int do_rebin(const double *img, int xdim, int ydim, double x, double y, \
             o_ind++;
 	}
     }
+#endif
 
     rind = 0;
     pind = 0;
@@ -98,13 +123,19 @@ int do_rebin(const double *img, int xdim, int ydim, double x, double y, \
 	    if( phi >= phirange[pind+1] || phi < phirange[pind] ) {
 		pind = binsearch(phi, phirange, philen);
 	    }
-	    // indices should be okay now, just the summing is left
+	    // indices are okay now
+#ifdef MAKE_TABLE
+            rad_out[i_ind] = (uint16_t) rind+1; // Make room for masked pixels
+            phi_out[i_ind] = (uint16_t) pind;
+#else
             o_ind = pind*rbins + rind;
 	    a_out[o_ind] += img[i_ind];
 	    n_out[o_ind]++;
+#endif
 	}
     }
 
+#ifndef MAKE_TABLE
     if(norm) {
 	// normalize
 	for(p = 0; p < rbins*phibins; p++) {
@@ -113,6 +144,7 @@ int do_rebin(const double *img, int xdim, int ydim, double x, double y, \
 	    }
 	}
     }
+#endif
 
     return 0;
 }
