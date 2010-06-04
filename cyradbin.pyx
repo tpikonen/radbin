@@ -1,5 +1,6 @@
 import numpy as np
 cimport numpy as np
+cimport cython
 
 cdef extern from "stdint.h":
     ctypedef unsigned char uint8_t
@@ -210,3 +211,40 @@ def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=Non
             "map" : maparr }
     return outd
 
+@cython.boundscheck(False)
+def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
+    """Return index tables constructed from maparray.
+
+    The return value is an array with shape [p,q] containing
+    an index array in each element.
+    """
+    cdef np.ndarray[np.uint16_t, ndim=1] parr = marr[...,0].flatten()
+    cdef np.ndarray[np.uint16_t, ndim=1] qarr = marr[...,1].flatten()
+    cdef int pmax = np.max(parr)
+    cdef int qmax = np.max(qarr)
+    cdef np.ndarray nelems = np.zeros((pmax+1,qmax+1), dtype=np.int)
+    cdef int i
+    for i in range(len(qarr)):
+        nelems[parr[i], qarr[i]] += 1
+    cdef np.ndarray inds = np.zeros((pmax+1,qmax+1), dtype=np.object)
+    cdef np.ndarray cnts = np.zeros((pmax+1,qmax+1), dtype=np.int)
+    for i in range(len(nelems.flat)):
+        inds.flat[i] = np.zeros((nelems.flat[i]), dtype=np.uint32)
+    for i in range(len(qarr)):
+        inds[parr[i], qarr[i]][cnts[parr[i], qarr[i]]] = i
+        cnts[parr[i], qarr[i]] += 1
+    return inds[:,1:]
+
+
+def radial_bin(indices, frame):
+    """Return a pixels of a `frame` sorted into bins determined by `indices`.
+
+    The shapes of `indices` and `frame` must be identical.
+    """
+    Irad = np.zeros_like(indices).astype('float64')
+    for j in range(indices.shape[1]):
+        for i in range(indices.shape[0]):
+            ind = indices[i,j].astype('int32')
+            Irad[i,j] = np.sum(frame.flat[ind])
+            Irad[i,j] /= len(ind)
+    return Irad
