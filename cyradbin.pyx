@@ -122,22 +122,38 @@ def radbin(image, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=
     return a, n
 
 
+def bincenters(arr):
+    """Calculate centers of bins defined by `arr`.
+
+    Return value has length len(arr)-1.
+    """
+    return np.array([(arr[i] + arr[i+1])/2.0 for i in range(len(arr)-1)])
+
+
 def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=None):
     """make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=None)
 
     Return tables of radial and angular indices to a in image with a given
-    size and center.
+    shape and center.
 
     The coordinate system of the image is such that the upper left corner
     of the image is at position [0.0, 0.0], i.e. the centers of the pixels
     are at positions [n+0.5, m+0.5].
 
-    :Parameters:
-     - c_x: coordinate of the center in horizontal direction
-     - c_y: coordinate of the center in vertical direction
-     - radrange: array containing the edges of radial bins
-     - phirange: array containing the edges of angular bins
-     - mask: mask file, same size as image, image values where mask != 1 are ignored
+    Input parameters
+        `center`: coordinates of the center in horizontal, vertical
+        `radrange`: array containing the edges of radial bins
+        `phirange`: array containing the edges of angular bins
+        `mask`: mask file, same size as image, image values where mask != 1 are ignored
+
+    Output is a dictionary with the following keys
+        `center`: Numpy array with the center coordinates.
+        `phibins`: Edges of the phi bins (equal to `phirange`, if given)
+        `radbins`: Edges of the radial bins (equal to `radrange`, if given)
+        `phicens`: Centers of the phi bins (array of length len(phibins)-1)
+        `radcens`: Centers of the radial bins (array of length len(radbins)-1)
+        `map`: Numpy array with ndim=3. map[:,:,0] is an array mapping each
+            pixel to its phi bin and map[:,:,1] is the radial bin mapping.
     """
     # Check Python args
     if len(table_shape) != 2:
@@ -181,6 +197,16 @@ def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=Non
 
     retval = make_radtable(xdim, ydim, xo, yo, radrange_in, radlen, phirange_in, philen, mask_in, rad_out, phi_out)
 
-    rad = rad.squeeze()
-    phi = phi.squeeze()
-    return rad, phi
+    maparr = np.zeros((table_shape[0], table_shape[1], 2), dtype=np.uint16)
+    maparr[...,0] = phi
+    maparr[...,1] = rad
+    phicens = bincenters(phirange_arr)
+    radcens = bincenters(radrange_arr)
+    outd = {"center" : np.array([c_x, c_y]),
+            "phibins" : phirange_arr,
+            "radbins" : radrange_arr,
+            "phicens" : phicens,
+            "radcens" : radcens,
+            "map" : maparr }
+    return outd
+
