@@ -15,11 +15,44 @@ cdef extern int make_radtable(int xdim, int ydim, double x, double y, \
     double *phirange_in, int philen, uint8_t *mask,\
     uint16_t *rad_out, uint16_t *phi_out)
 
-def radbin(np.ndarray image, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=None, int norm=1, mask=None):
+
+def __check_radrange(radrange, imshape, c_x, c_y):
+    if radrange is None:
+        maxdist = max(map(np.linalg.norm, [[c_x, c_y], [imshape[0] - c_x, c_y], [c_x, imshape[1] - c_y], [imshape[0] - c_x, imshape[1] - c_y]]))
+        radrange_arr = np.arange(0.0, np.ceil(maxdist) + 1.0).astype('double')
+    else:
+        if radrange.ndim != 1:
+            raise ValueError
+        radrange_arr = radrange.astype('double')
+    return radrange_arr
+
+
+def __check_phirange(phirange):
+    if phirange is None:
+        phirange_arr = np.linspace(0.0, 2.0*np.pi, num=2).astype('double')
+    else:
+        if phirange.ndim != 1:
+            raise ValueError
+        phirange_arr = phirange.astype('double')
+    return phirange_arr
+
+
+def __check_mask(mask, imshape):
+    if mask is None:
+        mask_arr = np.ones(imshape).astype('uint8')
+    else:
+        if(mask.ndim != 2 or mask.shape[0] != imshape[0]
+            or mask.shape[1] != imshape[1]):
+            raise ValueError
+        mask_arr = mask.astype('uint8')
+    return mask_arr
+
+
+def radbin(image, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=None, int norm=1, mask=None):
     """radbin(np.ndarray image, double c_x=np.nan, double c_y=np.nan,
         radrange=None, phirange=None, int norm=1, mask=None)
 
-    Radial rebinning of (SAS) data.
+    Radial rebinning of a 2D image array.
     The coordinate system of the image is such that the upper left corner
     of the image is at position [0.0, 0.0], i.e. the centers of the pixels
     are at positions [n+0.5, m+0.5].
@@ -43,30 +76,13 @@ def radbin(np.ndarray image, double c_x=np.nan, double c_y=np.nan, radrange=None
         c_y = image_arr.shape[0] / 2.0
 
     cdef np.ndarray radrange_arr
-    if radrange == None:
-        maxdist = max(map(np.linalg.norm, [[c_x, c_y], [image.shape[0] - c_x, c_y], [c_x, image.shape[1] - c_y], [image.shape[0] - c_x, image.shape[1] - c_y]]))
-        radrange_arr = np.arange(0.0, np.ceil(maxdist) + 1.0).astype('double')
-    else:
-        if radrange.ndim != 1:
-            raise ValueError
-        radrange_arr = radrange.astype('double')
+    radrange_arr = __check_radrange(radrange, image.shape, c_x, c_y)
 
     cdef np.ndarray phirange_arr
-    if phirange == None:
-        phirange_arr = np.linspace(0.0, 2.0*np.pi, num=2).astype('double')
-    else:
-        if phirange.ndim != 1:
-            raise ValueError
-        phirange_arr = phirange.astype('double')
+    phirange_arr = __check_phirange(phirange)
 
     cdef np.ndarray mask_arr
-    if mask == None:
-        mask_arr = np.ones_like(image).astype('uint8')
-    else:
-        if(mask.ndim != 2 or mask.shape[0] != image.shape[0]
-            or mask.shape[1] != image.shape[1]):
-            raise ValueError
-        mask_arr = mask.astype('uint8')
+    mask_arr = __check_mask(mask, image.shape)
 
     # Input args to C function call
     cdef double *img = <double *> image_arr.data
@@ -106,9 +122,8 @@ def radbin(np.ndarray image, double c_x=np.nan, double c_y=np.nan, radrange=None
     return a, n
 
 
-def make_radtables(table_shape, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=None, mask=None):
-    """make_radtables(table_shape, c_x=np.nan, double c_y=np.nan,
-        radrange=None, phirange=None, mask=None)
+def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=None):
+    """make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=None)
 
     Return tables of radial and angular indices to a in image with a given
     size and center.
@@ -125,39 +140,29 @@ def make_radtables(table_shape, double c_x=np.nan, double c_y=np.nan, radrange=N
      - mask: mask file, same size as image, image values where mask != 1 are ignored
     """
     # Check Python args
+    if len(table_shape) != 2:
+        raise ValueError
     cdef int xdim = table_shape[1]
     cdef int ydim = table_shape[0]
 
-    if np.isnan(c_x):
+    cdef double c_x, c_y
+    if center is None:
         c_x = table_shape[1] / 2.0
-    if np.isnan(c_y):
         c_y = table_shape[0] / 2.0
+    else:
+        if len(center) != 2:
+            raise ValueError
+        c_x = center[0]
+        c_y = center[1]
 
     cdef np.ndarray radrange_arr
-    if radrange == None:
-        maxdist = max(map(np.linalg.norm, [[c_x, c_y], [table_shape[0] - c_x, c_y], [c_x, table_shape[1] - c_y], [table_shape[0] - c_x, table_shape[1] - c_y]]))
-        radrange_arr = np.arange(0.0, np.ceil(maxdist) + 1.0).astype('double')
-    else:
-        if radrange.ndim != 1:
-            raise ValueError
-        radrange_arr = radrange.astype('double')
+    radrange_arr = __check_radrange(radrange, table_shape, c_x, c_y)
 
     cdef np.ndarray phirange_arr
-    if phirange == None:
-        phirange_arr = np.linspace(0.0, 2.0*np.pi, num=2).astype('double')
-    else:
-        if phirange.ndim != 1:
-            raise ValueError
-        phirange_arr = phirange.astype('double')
+    phirange_arr = __check_phirange(phirange)
 
     cdef np.ndarray mask_arr
-    if mask == None:
-        mask_arr = np.ones(table_shape).astype('uint8')
-    else:
-        if(mask.ndim != 2 or mask.shape[0] != table_shape[0]
-            or mask.shape[1] != table_shape[1]):
-            raise ValueError
-        mask_arr = mask.astype('uint8')
+    mask_arr = __check_mask(mask, table_shape)
 
     # Input args to C function call
     cdef double xo = c_x
