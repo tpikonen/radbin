@@ -218,21 +218,23 @@ def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
     The return value is an array with shape [p,q] containing
     an index array in each element.
     """
-    cdef np.ndarray[np.uint16_t, ndim=1] parr = marr[...,0].flatten()
-    cdef np.ndarray[np.uint16_t, ndim=1] qarr = marr[...,1].flatten()
-    cdef int pmax = np.max(parr)
-    cdef int qmax = np.max(qarr)
+    cdef np.ndarray[np.uint16_t, ndim=1] mflat = marr.ravel()
+    cdef int mlen = marr.shape[0] * marr.shape[1]
+    cdef int pmax = marr[...,0].max()
+    cdef int qmax = marr[...,1].max()
     cdef np.ndarray nelems = np.zeros((pmax+1,qmax+1), dtype=np.int)
-    cdef int i
-    for i in range(len(qarr)):
-        nelems[parr[i], qarr[i]] += 1
+    cdef int i, p
+    for i in xrange(mlen):
+        p = 2*i
+        nelems[mflat[p], mflat[p+1]] += 1
     cdef np.ndarray inds = np.zeros((pmax+1,qmax+1), dtype=np.object)
     cdef np.ndarray cnts = np.zeros((pmax+1,qmax+1), dtype=np.int)
-    for i in range(len(nelems.flat)):
+    for i in xrange(len(nelems.flat)):
         inds.flat[i] = np.zeros((nelems.flat[i]), dtype=np.uint32)
-    for i in range(len(qarr)):
-        inds[parr[i], qarr[i]][cnts[parr[i], qarr[i]]] = i
-        cnts[parr[i], qarr[i]] += 1
+    for i in xrange(mlen):
+        p = 2*i
+        inds[mflat[p], mflat[p+1]][cnts[mflat[p], mflat[p+1]]] = i
+        cnts[mflat[p], mflat[p+1]] += 1
     return inds[:,1:]
 
 
