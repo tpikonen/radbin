@@ -213,6 +213,43 @@ def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=Non
             "map" : maparr }
     return outd
 
+
+#def map_bin(mapd, frame, norm=True, masked=False):
+#    """Apply the map dictionary `mapd` to `frame`, return the rebinned array.
+#
+#    If `norm` is true, normalize the output array with the number of values
+#    summed to each bin.
+#
+#    If `masked` is true, masked values are in the [0,0] position
+#    in the resulting array and values [1:,0] are zeros. Otherwise
+#    the first row of the result array is discarded.
+#
+#    This function is very slow, use maparr2indices and index_bin instead.
+#    """
+#    mapshape = (mapd["map"].shape[0], mapd["map"].shape[1])
+#    if mapshape != frame.shape:
+#        raise ValueError("frame shape does not match map shape")
+#    mlen = mapshape[0] * mapshape[1]
+#    out = np.zeros((mapd["outshape"][0], mapd["outshape"][1]+1), dtype=np.float64)
+#    nelems = np.zeros((mapd["outshape"][0], mapd["outshape"][1]+1), dtype=np.uint32)
+#    mflat = mapd["map"].ravel()
+#    cdef int i, p
+#    if norm:
+#        for i in xrange(mlen):
+#            p = 2*i
+#            out[mflat[p], mflat[p+1]] += frame.flat[i]
+#            nelems[mflat[p], mflat[p+1]] += 1
+#        for i in xrange(np.prod(out.shape)):
+#            out.flat[i] / nelems.flat[i]
+#    else:
+#        for i in xrange(mlen):
+#            p = 2*i
+#            out[mflat[p], mflat[p+1]] += frame.flat[i]
+#    if masked:
+#        return out
+#    else:
+#        return out[:,1:]
+
 @cython.boundscheck(False)
 def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
     """Return index tables constructed from maparray.
