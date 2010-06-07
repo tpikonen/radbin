@@ -238,7 +238,7 @@ def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
     return inds[:,1:]
 
 
-def radial_bin(indices, frame):
+def index_bin(indices, frame):
     """Return a pixels of a `frame` sorted into bins determined by `indices`.
 
     The shapes of `indices` and `frame` must be identical.
