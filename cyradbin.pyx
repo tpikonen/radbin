@@ -149,10 +149,11 @@ def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=Non
 
     Output is a dictionary with the following keys
         `center`: Numpy array with the center coordinates.
-        `phibins`: Edges of the phi bins (equal to `phirange`, if given)
-        `radbins`: Edges of the radial bins (equal to `radrange`, if given)
-        `phicens`: Centers of the phi bins (array of length len(phibins)-1)
-        `radcens`: Centers of the radial bins (array of length len(radbins)-1)
+        `pbins`: Edges of the phi bins (equal to `phirange`, if given)
+        `qbins`: Edges of the radial bins (equal to `radrange`, if given)
+        `pcens`: Centers of the phi bins (array of length len(phibins)-1)
+        `qcens`: Centers of the radial bins (array of length len(radbins)-1)
+        `outshape`: Shape of the resulting array when the map is applied.
         `map`: Numpy array with ndim=3. map[:,:,0] is an array mapping each
             pixel to its phi bin and map[:,:,1] is the radial bin mapping.
     """
@@ -204,10 +205,11 @@ def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=Non
     phicens = bincenters(phirange_arr)
     radcens = bincenters(radrange_arr)
     outd = {"center" : np.array([c_x, c_y]),
-            "phibins" : phirange_arr,
-            "radbins" : radrange_arr,
-            "phicens" : phicens,
-            "radcens" : radcens,
+            "pbins" : phirange_arr,
+            "qbins" : radrange_arr,
+            "pcens" : phicens,
+            "qcens" : radcens,
+            "outshape" : (len(phicens), len(radcens)),
             "map" : maparr }
     return outd
 
