@@ -238,15 +238,18 @@ def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
     return inds[:,1:]
 
 
-def radial_bin(indices, frame):
+@cython.boundscheck(False)
+def radial_bin(np.ndarray indices, np.ndarray[np.int32_t, ndim=2] frame):
     """Return a pixels of a `frame` sorted into bins determined by `indices`.
 
     The shapes of `indices` and `frame` must be identical.
     """
-    Irad = np.zeros_like(indices).astype('float64')
-    for j in range(indices.shape[1]):
-        for i in range(indices.shape[0]):
-            ind = indices[i,j].astype('int32')
+    cdef np.ndarray Irad = np.zeros_like(indices).astype('float64')
+    cdef int i, j
+    cdef np.ndarray[np.uint32_t, ndim=1] ind
+    for j in xrange(indices.shape[1]):
+        for i in xrange(indices.shape[0]):
+            ind = indices[i,j].astype('uint32')
             Irad[i,j] = np.sum(frame.flat[ind])
             Irad[i,j] /= len(ind)
     return Irad
