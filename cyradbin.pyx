@@ -277,10 +277,8 @@ def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
     return inds[:,1:]
 
 
-def index_bin(indices, frame):
-    """Return a pixels of a `frame` sorted into bins determined by `indices`.
-
-    The shapes of `indices` and `frame` must be identical.
+def indbin(indices, frame):
+    """Return a pixels of `frame` sorted into bins determined by `indices`.
     """
     Irad = np.zeros_like(indices).astype('float64')
     for j in range(indices.shape[1]):
