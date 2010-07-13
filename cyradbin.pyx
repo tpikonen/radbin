@@ -280,10 +280,14 @@ def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
 def indbin(indices, frame):
     """Return a pixels of `frame` sorted into bins determined by `indices`.
     """
+    if len(indices.shape) == 1:
+        indices = np.reshape(indices, (1, len(indices)))
+    elif len(indices.shape) != 2:
+        raise ValueError
     Irad = np.zeros_like(indices).astype('float64')
     for j in range(indices.shape[1]):
         for i in range(indices.shape[0]):
             ind = indices[i,j].astype('int32')
             Irad[i,j] = np.sum(frame.flat[ind])
             Irad[i,j] /= len(ind)
-    return Irad
+    return Irad.squeeze()
