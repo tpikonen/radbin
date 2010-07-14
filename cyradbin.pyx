@@ -131,7 +131,7 @@ def bincenters(arr):
     return np.array([(arr[i] + arr[i+1])/2.0 for i in range(len(arr)-1)])
 
 
-def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=None):
+def make_radmap(table_shape, center, radrange=None, phirange=None, mask=None):
     """make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=None)
 
     Return tables of radial and angular indices to a in image with a given
@@ -164,14 +164,10 @@ def make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=Non
     cdef int ydim = table_shape[0]
 
     cdef double c_x, c_y
-    if center is None:
-        c_x = table_shape[1] / 2.0
-        c_y = table_shape[0] / 2.0
-    else:
-        if len(center) != 2:
-            raise ValueError
-        c_x = center[0]
-        c_y = center[1]
+    if len(center) != 2:
+        raise ValueError
+    c_x = center[0]
+    c_y = center[1]
 
     cdef np.ndarray radrange_arr
     radrange_arr = __check_radrange(radrange, table_shape, c_x, c_y)
