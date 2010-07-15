@@ -131,10 +131,10 @@ def bincenters(arr):
     return np.array([(arr[i] + arr[i+1])/2.0 for i in range(len(arr)-1)])
 
 
-def make_radmap(table_shape, center, radrange=None, phirange=None, mask=None):
-    """make_radmap(table_shape, center=None, radrange=None, phirange=None, mask=None)
+def make_radmap(imshape, center, radrange=None, phirange=None, mask=None):
+    """make_radmap(imshape, center, radrange=None, phirange=None, mask=None)
 
-    Return tables of radial and angular indices to a in image with a given
+    Return tables of radial and angular indices to an image with a given
     shape and center.
 
     The coordinate system of the image is such that the upper left corner
@@ -142,10 +142,15 @@ def make_radmap(table_shape, center, radrange=None, phirange=None, mask=None):
     are at positions [n+0.5, m+0.5].
 
     Input parameters
-        `center`: coordinates of the center in horizontal, vertical
-        `radrange`: array containing the edges of radial bins
-        `phirange`: array containing the edges of angular bins
-        `mask`: mask file, same size as image, image values where mask != 1 are ignored
+        `imshape` : Tuple of length 2 giving the shape of the map input.
+        `center`  : Coordinates of the center in horizontal, vertical
+        `radrange`: Array containing the edges of radial bins,
+            default value is the number of pixels from the center to
+            the farthest corner.
+        `phirange`: Array containing the edges of angular bins,
+            default value is linspace(0, 2*pi, 2)
+        `mask`    : Mask file, image values where mask != 1 are ignored.
+            Shape of the mask must be equal to `imshape`.
 
     Output is a dictionary with the following keys
         `center`: Numpy array with the center coordinates.
@@ -158,10 +163,10 @@ def make_radmap(table_shape, center, radrange=None, phirange=None, mask=None):
             pixel to its phi bin and map[:,:,1] is the radial bin mapping.
     """
     # Check Python args
-    if len(table_shape) != 2:
+    if len(imshape) != 2:
         raise ValueError
-    cdef int xdim = table_shape[1]
-    cdef int ydim = table_shape[0]
+    cdef int xdim = imshape[1]
+    cdef int ydim = imshape[0]
 
     cdef double c_x, c_y
     if len(center) != 2:
@@ -170,13 +175,13 @@ def make_radmap(table_shape, center, radrange=None, phirange=None, mask=None):
     c_y = center[1]
 
     cdef np.ndarray radrange_arr
-    radrange_arr = __check_radrange(radrange, table_shape, c_x, c_y)
+    radrange_arr = __check_radrange(radrange, imshape, c_x, c_y)
 
     cdef np.ndarray phirange_arr
     phirange_arr = __check_phirange(phirange)
 
     cdef np.ndarray mask_arr
-    mask_arr = __check_mask(mask, table_shape)
+    mask_arr = __check_mask(mask, imshape)
 
     # Input args to C function call
     cdef double xo = c_x
@@ -188,14 +193,14 @@ def make_radmap(table_shape, center, radrange=None, phirange=None, mask=None):
     cdef uint8_t *mask_in = <uint8_t *> mask_arr.data
 
     # Output args to C function
-    cdef np.ndarray rad = np.zeros(table_shape, dtype=np.uint16)
+    cdef np.ndarray rad = np.zeros(imshape, dtype=np.uint16)
     cdef uint16_t *rad_out = <uint16_t *> rad.data
-    cdef np.ndarray phi = np.zeros(table_shape, dtype=np.uint16)
+    cdef np.ndarray phi = np.zeros(imshape, dtype=np.uint16)
     cdef uint16_t *phi_out = <uint16_t *> phi.data
 
     retval = make_radtable(xdim, ydim, xo, yo, radrange_in, radlen, phirange_in, philen, mask_in, rad_out, phi_out)
 
-    maparr = np.zeros((table_shape[0], table_shape[1], 2), dtype=np.uint16)
+    maparr = np.zeros((imshape[0], imshape[1], 2), dtype=np.uint16)
     maparr[...,0] = phi
     maparr[...,1] = rad
     phicens = bincenters(phirange_arr)
