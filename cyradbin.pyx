@@ -215,6 +215,33 @@ def make_radmap(imshape, center, radrange=None, phirange=None, mask=None):
     return outd
 
 
+def make_radind(imshape, center, radrange=None, phirange=None, mask=None):
+    """make_radind(imshape, center, radrange=None, phirange=None, mask=None)
+
+    Return a indices mapping an image to radial and angular bins.
+    See `make_radmap` for input arguments.
+
+    Output is a dictionary with the following keys
+        `center`: Numpy array with the center coordinates.
+        `pbins`: Edges of the phi bins (equal to `phirange`, if given)
+        `qbins`: Edges of the radial bins (equal to `radrange`, if given)
+        `pcens`: Centers of the phi bins (array of length len(phibins)-1)
+        `qcens`: Centers of the radial bins (array of length len(radbins)-1)
+        `indices` : Indices calculated with `maparr2indices`, suitable for
+            input to `indbin`. Has the shape of the `indbin` output array.
+    """
+    outd = make_radmap(imshape, center, radrange, phirange, mask)
+    outd['indices'] = maparr2indices(outd['map'])
+    outd.pop('map')
+    outd.pop('outshape')
+    ishape = outd['indices'].shape
+    outd['pbins'] = outd['pbins'][0:ishape[0]+1]
+    outd['qbins'] = outd['qbins'][0:ishape[1]+1]
+    outd['pcens'] = bincenters(outd['pbins'])
+    outd['qcens'] = bincenters(outd['qbins'])
+    return outd
+
+
 #def map_bin(mapd, frame, norm=True, masked=False):
 #    """Apply the map dictionary `mapd` to `frame`, return the rebinned array.
 #
