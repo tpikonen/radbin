@@ -305,17 +305,71 @@ def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
     return inds[:,1:]
 
 
-def indbin(indices, frame):
-    """Return a pixels of `frame` sorted into bins determined by `indices`.
+# FIXME: Write this function
+#def indbins(indices, frame, sort=False):
+#    """Return values of `frame` binned into positions determined by `indices`.
+#
+#    The return value has the shape of `indices` (a p x q array) with the
+#    array elements containing arrays, which contain the values in
+#    indexed positions in `frame`.
+#    """
+
+
+def binstats(indices, frame, calculate=(True, False, False, False)):
+    """Calculate statistics from bins in `frame`.
+
+    The bins in `frame` are determined by `indices`.
+
+    The return value is a tuple containing the different statistics.
+
+    Parameter `calculate` is a tuple of booleans which determines
+    which statistics are returned. If
+        calculate[0] == True:   Return mean of the bins in ret[0].
+        calculate[1] == True:   Return median of the bins in ret[1].
+        calculate[2] == True:   Return std of the mean of bins in ret[2].
+        calculate[3] == True:   Return an estimate of std of mean derived
+            by assuming that the sum of counts in bins are Poisson distributed,
+            i.e. ret[3] = sqrt(sum(bins))/N_bins.
+
+    When calculate[n] is False, None is returned in ret[n].
     """
     if len(indices.shape) == 1:
         indices = np.reshape(indices, (1, len(indices)))
     elif len(indices.shape) != 2:
         raise ValueError
-    Irad = np.zeros_like(indices).astype('float64')
+    aver = None
+    medi = None
+    sdmn = None
+    psdm = None
+    if calculate[0]:
+        aver = np.zeros_like(indices).astype('float64')
+    if calculate[1]:
+        medi = np.zeros_like(indices).astype('float64')
+    if calculate[2]:
+        sdmn = np.zeros_like(indices).astype('float64')
+    if calculate[3]:
+        psdm = np.zeros_like(indices).astype('float64')
     for j in range(indices.shape[1]):
         for i in range(indices.shape[0]):
             ind = indices[i,j].astype('int32')
-            Irad[i,j] = np.sum(frame.flat[ind])
-            Irad[i,j] /= len(ind)
-    return Irad.squeeze()
+            data = frame.flat[ind]
+            N = len(data)
+            if calculate[0]:
+                aver[i,j] = np.mean(data)
+            if calculate[1]:
+                medi[i,j] = np.median(data)
+            if calculate[2]:
+                sdmn[i,j] = np.std(data)/np.sqrt(N)
+            if calculate[3]:
+                psdm[i,j] = np.sqrt(np.sum(data))/N
+
+    if calculate[0]:
+        aver = aver.squeeze()
+    if calculate[1]:
+        medi = medi.squeeze()
+    if calculate[2]:
+        sdmn = sdmn.squeeze()
+    if calculate[3]:
+        psdm = psdm.squeeze()
+
+    return (aver, medi, sdmn, psdm)
