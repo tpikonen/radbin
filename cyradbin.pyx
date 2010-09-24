@@ -124,7 +124,9 @@ def radbin(image, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=
 
 
 def bincenters(arr):
-    """Calculate centers of bins defined by `arr`.
+    """bincenters(arr)
+
+    Calculate centers of bins defined by `arr`.
 
     Return value has length len(arr)-1.
     """
@@ -280,7 +282,9 @@ def make_radind(imshape, center, radrange=None, phirange=None, mask=None):
 
 @cython.boundscheck(False)
 def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
-    """Return index tables constructed from maparray.
+    """maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None)
+
+    Return index tables constructed from maparray.
 
     The return value is an array with shape [p,q] containing
     an index array in each element.
@@ -316,7 +320,9 @@ def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
 
 
 def binstats(indices, frame, calculate=(True, False, False, False)):
-    """Calculate statistics from bins in `frame`.
+    """binstats(indices, frame, calculate=(True, False, False, False))
+
+    Calculate statistics from bins in `frame`.
 
     The bins in `frame` are determined by `indices`.
 
