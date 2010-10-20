@@ -2,7 +2,10 @@ EXTENSION=cyradbin.so
 EXTOBJS=cyradbin.o dorebin.o binsearch.o
 PYXSRCS=cyradbin.pyx
 PYXPRODS=cyradbin.c
-CFLAGS+=-shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.5 -I/usr/lib/python2.5/site-packages/numpy/core/include/numpy
+PYTHON_INC=/usr/include/python2.6
+NUMPY_INC=/usr/lib/python2.6/site-packages/numpy/core/include/numpy
+CFLAGS+=-shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing \
+ -I${PYTHON_INC} -I${NUMPY_INC}
 
 all: $(EXTENSION) test
 
