@@ -17,8 +17,10 @@ cdef extern int make_radtable(int xdim, int ydim, double x, double y, \
     uint16_t *rad_out, uint16_t *phi_out)
 
 
-def __check_radrange(radrange, imshape, c_x, c_y):
+def __check_radrange(radrange, imshape, cen):
     if radrange is None:
+        c_x = cen[0]
+        c_y = cen[1]
         maxdist = max(map(np.linalg.norm, [[c_x, c_y], [imshape[0] - c_x, c_y], [c_x, imshape[1] - c_y], [imshape[0] - c_x, imshape[1] - c_y]]))
         radrange_arr = np.arange(0.0, np.ceil(maxdist) + 1.0).astype('double')
     else:
@@ -49,9 +51,8 @@ def __check_mask(mask, imshape):
     return mask_arr
 
 
-def radbin(image, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=None, int norm=1, mask=None):
-    """radbin(np.ndarray image, double c_x=np.nan, double c_y=np.nan,
-        radrange=None, phirange=None, int norm=1, mask=None)
+def radbin(image, center, radrange=None, phirange=None, int norm=1, mask=None):
+    """radbin(image, center, radrange=None, phirange=None, int norm=1, mask=None)
 
     Radial rebinning of a 2D image array.
     The coordinate system of the image is such that the upper left corner
@@ -60,8 +61,7 @@ def radbin(image, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=
 
     :Parameters:
      - image: A 2D array
-     - c_x: coordinate of the center in horizontal direction
-     - c_y: coordinate of the center in vertical direction
+     - center: Tuple with center coordinates (cen_horizontal, cen_vertical)
      - radrange: array containing the edges of radial bins
      - phirange: array containing the edges of angular bins
      - norm: Do we normalize counts with number of pixels in the bin
@@ -70,14 +70,11 @@ def radbin(image, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=
     # Check Python args
     if image.ndim != 2:
         raise ValueError
+    if len(center) != 2:
+        raise ValueError
     cdef np.ndarray image_arr = image.astype('double')
-    if np.isnan(c_x):
-        c_x = image_arr.shape[1] / 2.0
-    if np.isnan(c_y):
-        c_y = image_arr.shape[0] / 2.0
-
     cdef np.ndarray radrange_arr
-    radrange_arr = __check_radrange(radrange, image.shape, c_x, c_y)
+    radrange_arr = __check_radrange(radrange, image.shape, center)
 
     cdef np.ndarray phirange_arr
     phirange_arr = __check_phirange(phirange)
@@ -89,14 +86,14 @@ def radbin(image, double c_x=np.nan, double c_y=np.nan, radrange=None, phirange=
     cdef double *img = <double *> image_arr.data
     if image_arr.strides[0] > image_arr.strides[1]:
         # First index jumps over columns / rows
-        center_x = c_x
-        center_y = c_y
+        center_x = center[0]
+        center_y = center[1]
         xshape = image_arr.shape[1]
         yshape = image_arr.shape[0]
     else:
         # Second index jumps over columns / rows
-        center_x = c_y
-        center_y = c_x
+        center_x = center[1]
+        center_y = center[0]
         xshape = image_arr.shape[0]
         yshape = image_arr.shape[1]
     cdef int xdim = xshape
@@ -167,17 +164,14 @@ def make_radmap(imshape, center, radrange=None, phirange=None, mask=None):
     # Check Python args
     if len(imshape) != 2:
         raise ValueError
+    if len(center) != 2:
+        raise ValueError
+
     cdef int xdim = imshape[1]
     cdef int ydim = imshape[0]
 
-    cdef double c_x, c_y
-    if len(center) != 2:
-        raise ValueError
-    c_x = center[0]
-    c_y = center[1]
-
     cdef np.ndarray radrange_arr
-    radrange_arr = __check_radrange(radrange, imshape, c_x, c_y)
+    radrange_arr = __check_radrange(radrange, imshape, center)
 
     cdef np.ndarray phirange_arr
     phirange_arr = __check_phirange(phirange)
@@ -186,8 +180,8 @@ def make_radmap(imshape, center, radrange=None, phirange=None, mask=None):
     mask_arr = __check_mask(mask, imshape)
 
     # Input args to C function call
-    cdef double xo = c_x
-    cdef double yo = c_y
+    cdef double xo = center[0]
+    cdef double yo = center[1]
     cdef double *radrange_in = <double *> radrange_arr.data
     cdef int radlen = radrange_arr.shape[0]
     cdef double *phirange_in = <double *> phirange_arr.data
@@ -207,7 +201,7 @@ def make_radmap(imshape, center, radrange=None, phirange=None, mask=None):
     maparr[...,1] = rad
     phicens = bincenters(phirange_arr)
     radcens = bincenters(radrange_arr)
-    outd = {"center" : np.array([c_x, c_y]),
+    outd = {"center" : np.array(center),
             "pbins" : phirange_arr,
             "qbins" : radrange_arr,
             "pcens" : phicens,
