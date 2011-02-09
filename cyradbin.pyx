@@ -353,7 +353,10 @@ def binstats(indices, frame, calculate=(True, False, False, False)):
         for i in range(indices.shape[0]):
             ind = indices[i,j].astype('int32')
             data = frame.flat[ind]
-            N = len(data)
+            try:
+                N = len(data)
+            except TypeError:
+                N = 1
             if calculate[0]:
                 aver[i,j] = np.mean(data)
             if calculate[1]:
