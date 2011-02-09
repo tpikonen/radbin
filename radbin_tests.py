@@ -27,10 +27,13 @@ def coordinate_test():
     I[0] = 0.0
     assert(not I.all())
 
-def symmetric_matrix():
+
+def radial_matrix():
     xx = np.linspace(-1, 1, num=100)
     ons = np.ones_like(xx)
-    rr = sqrt((np.outer(ons, xx**2)+np.outer(ons, xx**2).T))
+    rr = np.sqrt((np.outer(ons, xx**2)+np.outer(ons, xx**2).T))
+    return rr
+
 
 def binstats_test():
     lin = np.arange(10)
