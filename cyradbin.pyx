@@ -233,6 +233,7 @@ def make_radind(imshape, center, radrange=None, phirange=None, mask=None):
 
     Output is a dictionary with the following keys
         `center`: Numpy array with the center coordinates.
+        `imshape`: Shape of the input image.
         `pbins`: Edges of the phi bins (equal to `phirange`, if given)
         `qbins`: Edges of the radial bins (equal to `radrange`, if given)
         `pcens`: Centers of the phi bins (array of length len(phibins)-1)
@@ -245,6 +246,7 @@ def make_radind(imshape, center, radrange=None, phirange=None, mask=None):
     outd.pop('map')
     outd.pop('outshape')
     ishape = outd['indices'].shape
+    outd['imshape'] = imshape
     outd['pbins'] = outd['pbins'][0:ishape[0]+1]
     outd['qbins'] = outd['qbins'][0:ishape[1]+1]
     outd['pcens'] = bincenters(outd['pbins'])
