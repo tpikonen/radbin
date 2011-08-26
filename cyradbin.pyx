@@ -214,8 +214,22 @@ def make_radmap(imshape, center, radrange=None, phirange=None, mask=None):
 def make_radind(imshape, center, radrange=None, phirange=None, mask=None):
     """make_radind(imshape, center, radrange=None, phirange=None, mask=None)
 
-    Return a indices mapping an image to radial and angular bins.
-    See `make_radmap` for input arguments.
+    Return a rank-2 array of arrays which maps an image to radial,angular bins.
+
+    The coordinate system of the image is such that the upper left corner
+    of the image is at position [0.0, 0.0], i.e. the centers of the pixels
+    are at positions [n+0.5, m+0.5].
+
+    Input parameters
+        `imshape` : Tuple of length 2 giving the shape of the map input.
+        `center`  : Coordinates of the center in horizontal, vertical
+        `radrange`: Array containing the edges of radial bins,
+            default value is the number of pixels from the center to
+            the farthest corner.
+        `phirange`: Array containing the edges of angular bins,
+            default value is linspace(0, 2*pi, 2)
+        `mask`    : Mask file, image values where mask != 1 are ignored.
+            Shape of the mask must be equal to `imshape`.
 
     Output is a dictionary with the following keys
         `center`: Numpy array with the center coordinates.
