@@ -60,3 +60,13 @@ def binstats_test():
     assert(res[3][2] == 1.0)
     assert(res[3][3] == np.sqrt(np.sum(lin))/len(lin))
 #    return res
+
+
+def roundtrip_test():
+    imshape = (100,100)
+    rmap = r.make_radmap(imshape, (25.0, 51.2), np.arange(0, 100), np.linspace(0, 2*np.pi, 17))
+    marr1 = rmap['map']
+    inds = r.maparr2indices(marr1)
+    marr2 = r.indices2maparr(imshape, inds)
+    for i in xrange(np.size(marr1)):
+        assert(marr1.flat[i] == marr2.flat[i])
