@@ -283,6 +283,21 @@ def maparr2indices(np.ndarray[np.uint16_t, ndim=3] marr not None):
     return inds[:,1:]
 
 
+def indices2maparr(imshape, np.ndarray inds not None):
+    """indices2maparr(imshape, np.ndarray[ndim=2] inds not None)
+
+    Return a maparray constructed from image shape and indices.
+    """
+    marr = np.zeros((imshape[0]*imshape[1], 2), dtype=np.uint16)
+    for p in xrange(inds.shape[0]):
+        for q in xrange(inds.shape[1]):
+            marr[inds[p,q], 0] = p
+            # radial indices to maparrays are offset by one
+            # to allow for pixels outside of bins
+            marr[inds[p,q], 1] = q+1
+    return marr.reshape(imshape[0], imshape[1], 2)
+
+
 def binstats(indices, frame, calculate=(True, False, False, False)):
     """binstats(indices, frame, calculate=(True, False, False, False))
 
