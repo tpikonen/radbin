@@ -4,9 +4,9 @@ import re
 import numpy as np
 import radbin as r
 from optparse import OptionParser
-from xformats.detformats import read_mask
-from xformats.matformats import write_mat
-from xformats.yamlformats import read_ydat
+from solution.xformats.detformats import read_mask
+from solution.xformats.matformats import write_mat
+from solution.xformats.yamlformats import read_ydat
 
 description="Calculate radial indices from the center and mask."
 
